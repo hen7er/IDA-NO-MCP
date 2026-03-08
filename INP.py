@@ -839,6 +839,6 @@ if __name__ == "__main__":
     # 批处理模式不询问用户
     do_export(export_dir, ask_user=False, skip_auto_analysis=skip_analysis)
 
-    # 只在批处理模式下退出
-    if argc >= 2:
-        idc.qexit(0)
+    # 脚本执行完成后自动退出IDA
+    print("[*] Script execution completed, exiting IDA...")
+    idc.qexit(0)
