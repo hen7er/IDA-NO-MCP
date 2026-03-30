@@ -28,14 +28,23 @@ After restarting IDA:
 - **Hotkey**: `Ctrl-Shift-E` for quick export
 - **Menu**: `Edit` -> `Plugins` -> `Export for AI`
 
-## Exported Content
+## Compatibility
 
+- **IDA 7.x / 8.x**: Full support (type exports are gracefully skipped if `ida_typeinf` is unavailable)
+- **IDA 9.0+**: Full support
+
+## Exported Content
 
 | File/Directory          | Content                    | Description                                                                                 |
 | ----------------------- | -------------------------- | ------------------------------------------------------------------------------------------- |
 | `decompile/`            | Decompiled C code          | Each function as a `.c` file, includes function name, address, callers, callees            |
 | `decompile_failed.txt`  | Failed decompilation list  | Records functions that failed to decompile with reasons                                     |
 | `decompile_skipped.txt` | Skipped functions list     | Records skipped library functions and invalid functions                                     |
+| `function_index.txt`    | Function index             | Summary of all exported functions with addresses, names, and call relationships             |
+| `segments.txt`          | Segment table              | All segments: name, address range, size, RWX permissions, type                             |
+| `type_definitions.txt`  | Type definitions           | All structs, unions, and enums with member details                                          |
+| `data_definitions.txt`  | Data item definitions      | All typed data items in data segments: address, size, type, name, value                    |
+| `pointer_graph.txt`     | Pointer graph              | All pointers in data segments: source, target, target type (function/code/data)            |
 | `strings.txt`           | String table               | Includes address, length, type (ASCII/UTF-16/UTF-32), content                               |
 | `imports.txt`           | Import table               | Format: `address:function_name`                                                             |
 | `exports.txt`           | Export table               | Format: `address:function_name`                                                             |
@@ -64,6 +73,37 @@ Each function is exported as a separate `.c` file with metadata header:
 - Handles special characters and duplicate function names (adds address suffix)
 - Generates detailed failure and skip logs
 - Shows export progress (every 100 functions)
+- Supports crash recovery (restart IDA and export resumes where it left off)
+
+### Segment Export
+
+Exports all segment details to `segments.txt`:
+
+- Segment name, start/end address, size
+- Read/Write/Execute permissions (RWX)
+- Segment type
+
+### Type Definition Export
+
+Exports all recognized types to `type_definitions.txt`:
+
+- **Structs** (S) and **Unions** (U): each member's name, type, offset, and size
+- **Enums** (E): all enum members and their values
+
+### Data Definition Export
+
+Exports all typed data items from data segments to `data_definitions.txt`:
+
+- Supports byte/word/dword/qword/float/double/string/struct and more
+- Records address, size, type identifier, name, and value
+
+### Pointer Graph
+
+Extracts pointer relationships from data segments to `pointer_graph.txt`, helping AI understand cross-references between data structures:
+
+- Source address → target address
+- Target type: `F`=function, `C`=code, `D`=data
+- Pointer width: p16/p32/p64
 
 ### Call Relationship Analysis
 
@@ -73,7 +113,7 @@ Each function is exported as a separate `.c` file with metadata header:
 
 ### Memory Export
 
-- Exports all memory data by segments
+- Exports all memory data organized by segment
 - Maximum 1MB per file, automatically chunked
 - Hexdump format with address, hex bytes, and ASCII display
 - Filename format: `start_address--end_address.txt`
@@ -82,16 +122,13 @@ Each function is exported as a separate `.c` file with metadata header:
 
 Displays detailed statistics after export:
 
-- Total number of functions
-- Successfully exported count
-- Skipped count (library/invalid functions)
-- Failed count (with failure reasons)
+- Total functions, exported, skipped, failed counts
+- Segment count, type definition count, data item count, pointer count
 - Memory export size and file count
 
 ## Tips
 
 You can add more context in the IDB directory to give AI a complete picture:
-
 
 | Directory | Content                                              |
 | --------- | ---------------------------------------------------- |
